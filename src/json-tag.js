@@ -207,13 +207,15 @@ function renderJSONTags() {
 
 
 	async function fetchJSON(url) {
-		const rsp = await fetch(url),
-			data = await rsp.json();
+		const rsp = await fetch(url)
+			const data = await rsp.json();
 		let JSON = {
-			json: data
+			json: data,
+      last_json_key: data[data.length - 1]
 		}
 		return JSON;
 	}
+
 
 
 
