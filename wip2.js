@@ -31,7 +31,12 @@ function renderJSONTags() {
   const handleError = (tag, err) => {
     if (tag.hasAttribute("error-message")) {
       tag.innerHTML = tag.getAttribute("error-message");
-    } else {
+    } 
+   /* if (tag.hasAttribute("handle-error-message")) {
+   
+    }*/  
+    //
+      if (!tag.hasAttribute("handle-error-message") && !tag.hasAttribute("error-message")) {
       tag.innerHTML = `JSON-Tag Error: ${err.message}`;
     }
 
@@ -41,13 +46,11 @@ function renderJSONTags() {
 
   // Function to set attributes
   const setAttribute = (tag, error) => {
-    if (!tag.hasAttribute("json-rendered") && !tag.hasAttribute("json-error")) {
       if (error) {
         tag.setAttribute("json-error", "");
       } else {
         tag.setAttribute("json-rendered", "");
       }
-    }
   };
 
   // Function to fetch JSON
