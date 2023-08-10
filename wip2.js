@@ -90,13 +90,10 @@ function renderJSONTags() {
 
   // Function to get data from global variables
   const getData = (variableName) => {
-    
-     console.log(variableName)
     const dataMapping = window[variableName];
-    console.log( dataMapping)
     if (typeof dataMapping === "object") {
-     
-      return dataMapping;
+    
+      return {data:dataMapping}
     }
     return null;
   };
