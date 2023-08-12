@@ -5,19 +5,32 @@ function renderJSONTags() {
   // Function to render a JSON tag
   const renderJSONTag = async (tag) => {
     try {
-     if (!tag.hasAttribute("json-rendered") || !tag.hasAttribute("json-error")) {
+     if (!tag.hasAttribute("json-rendered") && !tag.hasAttribute("json-error")) {
        setAttribute(tag);
        
       let template = Hogan.compile(tag.innerHTML);
 
       if (tag.hasAttribute("local-json")) {
-        const data = getData(tag.getAttribute("local-json"));
+        let data = eval(tag.getAttribute("local-json"));
         if (data) {
+          data = {data:data}
           let output = template.render(data);
           tag.innerHTML = output;
         }
-      } else if (tag.hasAttribute("fetch-json")) {
-        await fetchAndRenderJSON(tag);
+      }
+         if(tag.hasAttribute("stored-json")){
+           await StoredJSON(tag, template)
+         }  
+       
+       if(tag.hasAttribute("store-json") && tag.hasAttribute("fetch-json")){
+         let result =  await storeJSON(tag.getAttribute("fetch-json"), tag.getAttribute("data-name"))
+           await fetchAndRenderJSON(tag, result);
+         
+         }
+       
+       if (tag.hasAttribute("fetch-json") && !tag.hasAttribute("store-json")) {
+         await fetchAndRenderJSON(tag);
+        
       }
 
       
@@ -52,7 +65,85 @@ function renderJSONTags() {
         tag.setAttribute("json-rendered", "");
       }
   };
+  
+  
+  
+   
+async function storeJSON(url, id)
+{
+  try {
+    let result = await fetchJSON(url)
+    var script_tag = document.createElement('script');
+    
+    result = result
+script_tag.type = 'JSON';
+script_tag.id = id
+script_tag.text = `${JSON.stringify(result)}`
+document.body.appendChild(script_tag);
+    return result
+  } catch( err ) {
+    console.error( err.message);
+  }
+}
 
+  
+  
+
+  async function StoredJSON(tag, template){
+
+    function renderStored(){
+      
+      let parsedData = JSON.parse(document.querySelector("#" + tag.getAttribute("data-name")).innerText)
+     
+       let output = template.render(parsedData)
+            
+				tag.innerHTML = output
+    }
+    
+    if(!tag.hasAttribute("data-name")){
+      throw {message: "No `data-name` Attribute Found"}
+      }
+    
+    
+    
+    
+    const delay = ms => new Promise(res => setTimeout(res, ms));
+           
+       /// NEED TO FIGURE OUT HOW TO THROW THIS ERROR.. 
+    function scriptLoaded(){        
+    if(document.querySelector("#" + tag.getAttribute("data-name")) == null){
+            return false
+               }
+    }
+    
+    console.log(document.querySelector("#" + tag.getAttribute("data-name")))
+                
+    await delay(500)//
+    if(scriptLoaded() === false){
+      await delay(500)
+      
+      if(scriptLoaded() === false){
+         await delay(500)
+      }
+      if(scriptLoaded() === false){
+         await delay(500)
+      }
+      if(scriptLoaded() === false){
+               throw {message: `Could not find stored JSON data named ${tag.getAttribute("data-name")} in the HTML page`}
+      }
+      if(scriptLoaded() !== false){
+        return renderStored()
+      }
+      
+    }
+  
+       if(scriptLoaded() != false){
+         return renderStored()
+       }
+    
+  }
+  
+  
   // Function to fetch JSON
   async function fetchJSON(url) {
     try {
@@ -77,9 +168,9 @@ function renderJSONTags() {
   }
 
   // Function to fetch and render JSON
-  const fetchAndRenderJSON = async (tag) => {
+  const fetchAndRenderJSON = async (tag, json = false) => {
     try {
-      let data = await fetchJSON(tag.getAttribute("fetch-json"));
+      let data = json || await fetchJSON(tag.getAttribute("fetch-json"));
       let template = Hogan.compile(tag.innerHTML);
       let output = template.render(data);
       tag.innerHTML = output;
@@ -88,15 +179,7 @@ function renderJSONTags() {
     }
   };
 
-  // Function to get data from global variables
-  const getData = (variableName) => {
-    const dataMapping = window[variableName];
-    if (typeof dataMapping === "object") {
-    
-      return {data:dataMapping}
-    }
-    return null;
-  };
+  
 
   // Initialize function
   const initialize = () => {
@@ -118,10 +201,11 @@ function renderJSONTags() {
             }
           });
         }
+       
       }
     });
 
-    observer.observe(document.body, { childList: true, subtree: true });
+    observer.observe(document.body, {attribute: true, childList: true, subtree: true });
   };
 
   initialize();
